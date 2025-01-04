@@ -25,9 +25,10 @@ const formSchema = z.object({
 })
 
 const models = [
-  { id: "o1", label: "Open AI 3.5" },
-  { id: "o2", label: "Open AI 4.0" },
-  { id: "openai", label: "Open AI O1 Mini" },
+  { id: "o1", label: "O1" },
+  { id: "o2", label: "O2" },
+  { id: "claude", label: "Claude" },
+  { id: "openai", label: "Open AI" },
 ]
 
 export function ExperimentForm({ onSubmit }: { onSubmit: () => void }) {
@@ -68,7 +69,7 @@ export function ExperimentForm({ onSubmit }: { onSubmit: () => void }) {
           name="promptOutput"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Test Prompt</FormLabel>
+              <FormLabel>Prompt Output</FormLabel>
               <FormControl>
                 <Input {...field} />
               </FormControl>
