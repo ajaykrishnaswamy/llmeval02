@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-
+import { Experiment } from "@/components/experiment";
 const formSchema = z.object({
   name: z.string().min(1, "Experiment name is required"),
   status: z.string().min(1, "Status is required"),
@@ -31,37 +31,54 @@ const models = [
 
 export function ExperimentForm({ 
   onSubmit,
-  supabase 
+  supabase,
+  initialData 
 }: { 
   onSubmit: () => void;
   supabase: any;
+  initialData?: Experiment | null;
 }) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      status: "",
-      frequency: "hourly",
+      name: initialData?.name || "",
+      status: initialData?.status || "",
+      frequency: (initialData?.frequency as "hourly" | "daily") || "hourly",
     },
   });
 
   async function onFormSubmit(values: z.infer<typeof formSchema>) {
     try {
-      const { data, error } = await supabase
-        .from("experiments")
-        .insert([
-          {
+      let error;
+      
+      if (initialData?.id) {
+        // Update existing experiment
+        const { error: updateError } = await supabase
+          .from("experiments")
+          .update({
             name: values.name,
             status: values.status,
             frequency: values.frequency,
-          },
-        ]);
+          })
+          .eq('id', initialData.id);
+        error = updateError;
+      } else {
+        // Insert new experiment
+        const { error: insertError } = await supabase
+          .from("experiments")
+          .insert([{
+            name: values.name,
+            status: values.status,
+            frequency: values.frequency,
+          }]);
+        error = insertError;
+      }
 
       if (error) {
-        console.error("Error inserting experiment:", error.message);
+        console.error("Error saving experiment:", error.message);
       } else {
-        console.log("Experiment added to database:", data);
-        onSubmit(); // This will now trigger the parent's handleExperimentAdded
+        console.log("Experiment saved successfully");
+        onSubmit();
       }
     } catch (err: unknown) {
       if (err instanceof Error) {

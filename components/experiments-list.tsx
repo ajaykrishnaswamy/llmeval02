@@ -12,14 +12,21 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { Experiment } from "./experiment-parent";
+import { Experiment } from "@/components/experiment";
 
 interface ExperimentsListProps {
   experiments: Experiment[];
   fetchExperiments: () => Promise<void>;
+  onEdit: (experiment: Experiment) => void;
+  onDelete: (id: number) => void;
 }
 
-export function ExperimentsList({ experiments, fetchExperiments }: ExperimentsListProps) {
+export function ExperimentsList({ 
+  experiments, 
+  fetchExperiments, 
+  onEdit, 
+  onDelete 
+}: ExperimentsListProps) {
   useEffect(() => {
     fetchExperiments();
   }, [fetchExperiments]);
@@ -46,13 +53,18 @@ export function ExperimentsList({ experiments, fetchExperiments }: ExperimentsLi
                 <TableCell>{experiment.frequency}</TableCell>
                 <TableCell>{experiment.created_at || "Unknown"}</TableCell>
                 <TableCell className="text-right">
-                  <Button variant="ghost" size="sm">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => onEdit(experiment)}
+                  >
                     Edit
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
                     className="text-destructive"
+                    onClick={() => onDelete(experiment.id)}
                   >
                     Delete
                   </Button>
