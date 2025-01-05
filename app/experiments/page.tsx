@@ -1,7 +1,7 @@
 "use client"
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ExperimentsList } from "@/components/experiments-list"
+import ExperimentsList from "@/components/experiments-list"
 import { ExperimentResults } from "@/components/experiment-results"
 
 export default function ExperimentsPage() {
