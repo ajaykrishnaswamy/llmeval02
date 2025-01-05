@@ -1,7 +1,7 @@
 "use client"
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import ExperimentsList from "@/components/experiments-list"
+import { ExperimentParent } from "@/components/experiment-parent"
 import { ExperimentResults } from "@/components/experiment-results"
 
 export default function ExperimentsPage() {
@@ -16,7 +16,7 @@ export default function ExperimentsPage() {
           <TabsTrigger value="results">View Results</TabsTrigger>
         </TabsList>
         <TabsContent value="manage" className="space-y-4">
-          <ExperimentsList />
+          <ExperimentParent />
         </TabsContent>
         <TabsContent value="results" className="space-y-4">
           <ExperimentResults />

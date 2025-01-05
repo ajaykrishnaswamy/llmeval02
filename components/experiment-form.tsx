@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import * as z from "zod"
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -12,40 +12,64 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const formSchema = z.object({
-  promptInput: z.string().min(1, "Prompt input is required"),
-  promptOutput: z.string().min(1, "Prompt output is required"),
-  models: z.array(z.string()).min(1, "Select at least one model"),
-  experimentName: z.string().min(1, "Experiment name is required"),
+  name: z.string().min(1, "Experiment name is required"),
+  status: z.string().min(1, "Status is required"),
   frequency: z.enum(["hourly", "daily"]),
-})
+});
 
 const models = [
   { id: "o1", label: "O1" },
   { id: "o2", label: "O2" },
   { id: "claude", label: "Claude" },
   { id: "openai", label: "Open AI" },
-]
+];
 
-export function ExperimentForm({ onSubmit }: { onSubmit: () => void }) {
+export function ExperimentForm({ 
+  onSubmit,
+  supabase 
+}: { 
+  onSubmit: () => void;
+  supabase: any;
+}) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      promptInput: "",
-      promptOutput: "",
-      models: [],
-      experimentName: "",
+      name: "",
+      status: "",
       frequency: "hourly",
     },
-  })
+  });
 
-  function onFormSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values)
-    onSubmit()
+  async function onFormSubmit(values: z.infer<typeof formSchema>) {
+    try {
+      const { data, error } = await supabase
+        .from("experiments")
+        .insert([
+          {
+            name: values.name,
+            status: values.status,
+            frequency: values.frequency,
+          },
+        ]);
+
+      if (error) {
+        console.error("Error inserting experiment:", error.message);
+      } else {
+        console.log("Experiment added to database:", data);
+        onSubmit(); // This will now trigger the parent's handleExperimentAdded
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        console.error("Unexpected error:", err.message);
+      } else {
+        console.error("Unexpected error:", err);
+      }
+    }
   }
 
   return (
@@ -53,78 +77,7 @@ export function ExperimentForm({ onSubmit }: { onSubmit: () => void }) {
       <form onSubmit={form.handleSubmit(onFormSubmit)} className="space-y-8">
         <FormField
           control={form.control}
-          name="promptInput"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Prompt Input</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="promptOutput"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Prompt Output</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="models"
-          render={() => (
-            <FormItem>
-              <FormLabel>Models</FormLabel>
-              <div className="grid grid-cols-2 gap-4">
-                {models.map((model) => (
-                  <FormField
-                    key={model.id}
-                    control={form.control}
-                    name="models"
-                    render={({ field }) => {
-                      return (
-                        <FormItem
-                          key={model.id}
-                          className="flex flex-row items-start space-x-3 space-y-0"
-                        >
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value?.includes(model.id)}
-                              onCheckedChange={(checked) => {
-                                return checked
-                                  ? field.onChange([...field.value, model.id])
-                                  : field.onChange(
-                                      field.value?.filter(
-                                        (value) => value !== model.id
-                                      )
-                                    )
-                              }}
-                            />
-                          </FormControl>
-                          <FormLabel className="font-normal">
-                            {model.label}
-                          </FormLabel>
-                        </FormItem>
-                      )
-                    }}
-                  />
-                ))}
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="experimentName"
+          name="name"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Experiment Name</FormLabel>
@@ -135,6 +88,20 @@ export function ExperimentForm({ onSubmit }: { onSubmit: () => void }) {
             </FormItem>
           )}
         />
+        <FormField
+          control={form.control}
+          name="status"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Status</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+    
         <FormField
           control={form.control}
           name="frequency"
@@ -151,17 +118,13 @@ export function ExperimentForm({ onSubmit }: { onSubmit: () => void }) {
                     <FormControl>
                       <RadioGroupItem value="hourly" />
                     </FormControl>
-                    <FormLabel className="font-normal">
-                      Hourly
-                    </FormLabel>
+                    <FormLabel className="font-normal">Hourly</FormLabel>
                   </FormItem>
                   <FormItem className="flex items-center space-x-3 space-y-0">
                     <FormControl>
                       <RadioGroupItem value="daily" />
                     </FormControl>
-                    <FormLabel className="font-normal">
-                      Daily
-                    </FormLabel>
+                    <FormLabel className="font-normal">Daily</FormLabel>
                   </FormItem>
                 </RadioGroup>
               </FormControl>
@@ -177,6 +140,5 @@ export function ExperimentForm({ onSubmit }: { onSubmit: () => void }) {
         </div>
       </form>
     </Form>
-  )
+  );
 }
-
