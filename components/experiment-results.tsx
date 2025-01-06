@@ -16,7 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { ThumbsUp, ThumbsDown } from 'lucide-react'
+import { ThumbsUp, ThumbsDown, Check, X } from 'lucide-react'
 
 const results = [
   {
@@ -44,6 +44,17 @@ export function ExperimentResults() {
             <SelectItem value="exp2">Test Experiment 2</SelectItem>
           </SelectContent>
         </Select>
+        <div className="flex gap-4">
+          <span className="flex items-center gap-1">
+            Mistral <Check className="h-4 w-4 text-green-500" />
+          </span>
+          <span className="flex items-center gap-1">
+            Google <Check className="h-4 w-4 text-green-500" />
+          </span>
+          <span className="flex items-center gap-1">
+            Meta <X className="h-4 w-4 text-red-500" />
+          </span>
+        </div>
       </div>
       <div className="rounded-md border">
         <Table>

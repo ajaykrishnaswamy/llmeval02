@@ -42,7 +42,7 @@ describe('ExperimentForm', () => {
     const initialData = {
       id: 1,
       name: 'Test Experiment',
-      status: 'active',
+      systemPrompt: 'Test Prompt',
       frequency: 'hourly',
       created_at: '2024-01-01'
     };
@@ -68,7 +68,7 @@ describe('ExperimentForm', () => {
 
     // Check for validation messages
     expect(await screen.findByText('Experiment name is required')).toBeInTheDocument();
-    expect(await screen.findByText('Status is required')).toBeInTheDocument();
+    expect(await screen.findByText('System prompt is required')).toBeInTheDocument();
   });
 
   it('handles form submission for new experiment', async () => {
@@ -76,7 +76,7 @@ describe('ExperimentForm', () => {
 
     // Fill out form
     await userEvent.type(screen.getByLabelText('Experiment Name'), 'New Experiment');
-    await userEvent.type(screen.getByLabelText('Status'), 'active');
+    await userEvent.type(screen.getByLabelText('System Prompt'), 'Test system prompt');
     await userEvent.click(screen.getByLabelText('Daily'));
 
     // Submit form
@@ -86,7 +86,7 @@ describe('ExperimentForm', () => {
     expect(mockSupabase.from).toHaveBeenCalledWith('experiments');
     expect(mockSupabase.from().insert).toHaveBeenCalledWith([{
       name: 'New Experiment',
-      status: 'active',
+      systemPrompt: 'Test system prompt',
       frequency: 'daily'
     }]);
 
@@ -98,7 +98,7 @@ describe('ExperimentForm', () => {
     const initialData = {
       id: 1,
       name: 'Test Experiment',
-      status: 'active',
+      systemPrompt: 'Test Prompt',
       frequency: 'hourly',
       created_at: '2024-01-01'
     };

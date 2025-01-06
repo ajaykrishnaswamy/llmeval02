@@ -13,6 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Experiment } from "@/components/experiment";
+import { Check, X } from "lucide-react";
 
 interface ExperimentsListProps {
   experiments: Experiment[];
@@ -33,47 +34,62 @@ export function ExperimentsList({
 
   return (
     <div className="rounded-md border">
-      {experiments.length === 0 && <p>Loading experiments...</p>}
-      {experiments.length > 0 && (
-        <Table>
-          <TableHeader>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead>System Prompt</TableHead>
+            <TableHead>Frequency</TableHead>
+            <TableHead>Models</TableHead>
+            <TableHead>Created At</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {experiments.length === 0 ? (
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Frequency</TableHead>
-              <TableHead>Created At</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableCell colSpan={6} className="text-center">
+                Loading experiments...
+              </TableCell>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {experiments.map((experiment) => (
+          ) : (
+            experiments.map((experiment) => (
               <TableRow key={experiment.id}>
-                <TableCell>{experiment.name}</TableCell>
-                <TableCell>{experiment.status}</TableCell>
+                <TableCell className="font-medium">{experiment.name}</TableCell>
+                <TableCell>{experiment.systemPrompt}</TableCell>
                 <TableCell>{experiment.frequency}</TableCell>
-                <TableCell>{experiment.created_at || "Unknown"}</TableCell>
+                <TableCell>
+                  <div className="flex gap-2">
+                    <span className="flex items-center gap-1">
+                      Mistral {experiment.mistral ? <Check className="h-4 w-4 text-green-500" /> : <X className="h-4 w-4 text-red-500" />}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      Google {experiment.google ? <Check className="h-4 w-4 text-green-500" /> : <X className="h-4 w-4 text-red-500" />}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      Meta {experiment.meta ? <Check className="h-4 w-4 text-green-500" /> : <X className="h-4 w-4 text-red-500" />}
+                    </span>
+                  </div>
+                </TableCell>
+                <TableCell>{new Date(experiment.created_at || '').toLocaleDateString()}</TableCell>
                 <TableCell className="text-right">
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => onEdit(experiment)}
-                  >
+                  <Button variant="ghost" size="sm" onClick={() => onEdit(experiment)}>
                     Edit
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-destructive"
                     onClick={() => onDelete(experiment.id)}
+                    className="text-red-500 hover:text-red-700"
                   >
                     Delete
                   </Button>
                 </TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      )}
+            ))
+          )}
+        </TableBody>
+      </Table>
     </div>
   );
 }

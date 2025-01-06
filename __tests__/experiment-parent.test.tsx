@@ -47,7 +47,12 @@ describe('ExperimentParent', () => {
     (mockDelete as any).eq = mockEq;
 
     (mockSupabase.from as jest.Mock).mockReturnValue({
-      select: jest.fn().mockResolvedValue({ data: [], error: null }),
+      select: jest.fn(() => Promise.resolve({ 
+        data: [
+          { id: 1, name: 'Test Exp', systemPrompt: 'Test Prompt', frequency: 'hourly', created_at: '2024-01-01' }
+        ], 
+        error: null 
+      })),
       insert: jest.fn().mockResolvedValue({ data: null, error: new Error('Test error') }),
       update: jest.fn().mockResolvedValue({ data: null, error: null }),
       delete: mockDelete,

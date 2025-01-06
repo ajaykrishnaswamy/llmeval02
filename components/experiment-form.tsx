@@ -18,8 +18,11 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Experiment } from "@/components/experiment";
 const formSchema = z.object({
   name: z.string().min(1, "Experiment name is required"),
-  status: z.string().min(1, "Status is required"),
+  systemPrompt: z.string().min(1, "System prompt is required"),
   frequency: z.enum(["hourly", "daily"]),
+  mistral: z.boolean().default(false),
+  google: z.boolean().default(false),
+  meta: z.boolean().default(false)
 });
 
 const models = [
@@ -42,8 +45,11 @@ export function ExperimentForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: initialData?.name || "",
-      status: initialData?.status || "",
+      systemPrompt: initialData?.systemPrompt || "",
       frequency: (initialData?.frequency as "hourly" | "daily") || "hourly",
+      mistral: initialData?.mistral || false,
+      google: initialData?.google || false,
+      meta: initialData?.meta || false,
     },
   });
 
@@ -57,8 +63,11 @@ export function ExperimentForm({
           .from("experiments")
           .update({
             name: values.name,
-            status: values.status,
+            systemPrompt: values.systemPrompt,
             frequency: values.frequency,
+            mistral: values.mistral,
+            google: values.google,
+            meta: values.meta,
           })
           .eq('id', initialData.id);
         error = updateError;
@@ -68,8 +77,11 @@ export function ExperimentForm({
           .from("experiments")
           .insert([{
             name: values.name,
-            status: values.status,
+            systemPrompt: values.systemPrompt,
             frequency: values.frequency,
+            mistral: values.mistral,
+            google: values.google,
+            meta: values.meta,
           }]);
         error = insertError;
       }
@@ -107,10 +119,10 @@ export function ExperimentForm({
         />
         <FormField
           control={form.control}
-          name="status"
+          name="systemPrompt"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Status</FormLabel>
+              <FormLabel>System Prompt</FormLabel>
               <FormControl>
                 <Input {...field} />
               </FormControl>
@@ -149,6 +161,58 @@ export function ExperimentForm({
             </FormItem>
           )}
         />
+
+        <div className="space-y-4">
+          <FormLabel>Model Selection</FormLabel>
+          <div className="flex flex-row gap-4">
+            <FormField
+              control={form.control}
+              name="mistral"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <FormLabel className="font-normal">Mistral</FormLabel>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="google"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <FormLabel className="font-normal">Google</FormLabel>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="meta"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <FormLabel className="font-normal">Meta</FormLabel>
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
         <div className="flex justify-end space-x-4">
           <Button variant="outline" type="button" onClick={onSubmit}>
             Cancel
