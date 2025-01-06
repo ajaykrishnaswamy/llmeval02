@@ -5,8 +5,26 @@ import { ExperimentsList } from '@/components/experiments-list';
 
 describe('ExperimentsList', () => {
   const mockExperiments = [
-    { id: 1, name: 'Test 1', systemPrompt: 'Prompt 1', frequency: 'hourly', created_at: '2024-01-01' },
-    { id: 2, name: 'Test 2', systemPrompt: 'Prompt 2', frequency: 'daily', created_at: '2024-01-02' },
+    { 
+      id: 1, 
+      name: 'Test 1', 
+      systemPrompt: 'Prompt 1', 
+      input_prompt: 'Input 1', 
+      created_at: '2024-01-01',
+      mistral: true,
+      google: false,
+      meta: true
+    },
+    { 
+      id: 2, 
+      name: 'Test 2', 
+      systemPrompt: 'Prompt 2', 
+      input_prompt: 'Input 2', 
+      created_at: '2024-01-02',
+      mistral: false,
+      google: true,
+      meta: false
+    },
   ];
 
   const mockFetchExperiments = jest.fn();
@@ -42,8 +60,10 @@ describe('ExperimentsList', () => {
 
     expect(screen.getByText('Test 1')).toBeInTheDocument();
     expect(screen.getByText('Prompt 1')).toBeInTheDocument();
+    expect(screen.getByText('Input 1')).toBeInTheDocument();
     expect(screen.getByText('Test 2')).toBeInTheDocument();
     expect(screen.getByText('Prompt 2')).toBeInTheDocument();
+    expect(screen.getByText('Input 2')).toBeInTheDocument();
   });
 
   it('calls fetchExperiments on mount', () => {

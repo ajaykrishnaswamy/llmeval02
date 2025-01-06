@@ -16,11 +16,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Experiment } from "@/components/experiment";
+import { DialogFooter } from "@/components/ui/dialog";
 const formSchema = z.object({
   name: z.string().min(1, "Experiment name is required"),
   systemPrompt: z.string().min(1, "System prompt is required"),
   input_prompt: z.string().min(1, "Input prompt is required"),
-  frequency: z.enum(["hourly", "daily"]),
   mistral: z.boolean().default(false),
   google: z.boolean().default(false),
   meta: z.boolean().default(false)
@@ -48,7 +48,6 @@ export function ExperimentForm({
       name: initialData?.name || "",
       systemPrompt: initialData?.systemPrompt || "",
       input_prompt: initialData?.input_prompt || "",
-      frequency: (initialData?.frequency as "hourly" | "daily") || "hourly",
       mistral: initialData?.mistral || false,
       google: initialData?.google || false,
       meta: initialData?.meta || false,
@@ -60,14 +59,12 @@ export function ExperimentForm({
       let error;
       
       if (initialData?.id) {
-        // Update existing experiment
         const { error: updateError } = await supabase
           .from("experiments")
           .update({
             name: values.name,
             systemPrompt: values.systemPrompt,
             input_prompt: values.input_prompt,
-            frequency: values.frequency,
             mistral: values.mistral,
             google: values.google,
             meta: values.meta,
@@ -75,14 +72,12 @@ export function ExperimentForm({
           .eq('id', initialData.id);
         error = updateError;
       } else {
-        // Insert new experiment
         const { error: insertError } = await supabase
           .from("experiments")
           .insert([{
             name: values.name,
             systemPrompt: values.systemPrompt,
             input_prompt: values.input_prompt,
-            frequency: values.frequency,
             mistral: values.mistral,
             google: values.google,
             meta: values.meta,
@@ -147,53 +142,21 @@ export function ExperimentForm({
             </FormItem>
           )}
         />
-    
-        <FormField
-          control={form.control}
-          name="frequency"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Frequency of Running</FormLabel>
-              <FormControl>
-                <RadioGroup
-                  onValueChange={field.onChange}
-                  value={field.value}
-                  className="flex flex-col space-y-1"
-                >
-                  <FormItem className="flex items-center space-x-3 space-y-0">
-                    <FormControl>
-                      <RadioGroupItem value="hourly" />
-                    </FormControl>
-                    <FormLabel className="font-normal">Hourly</FormLabel>
-                  </FormItem>
-                  <FormItem className="flex items-center space-x-3 space-y-0">
-                    <FormControl>
-                      <RadioGroupItem value="daily" />
-                    </FormControl>
-                    <FormLabel className="font-normal">Daily</FormLabel>
-                  </FormItem>
-                </RadioGroup>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
+        
         <div className="space-y-4">
-          <FormLabel>Model Selection</FormLabel>
-          <div className="flex flex-row gap-4">
+          <div className="flex items-center space-x-4">
             <FormField
               control={form.control}
               name="mistral"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                <FormItem className="flex items-center space-x-2">
                   <FormControl>
                     <Checkbox
                       checked={field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
-                  <FormLabel className="font-normal">Mistral</FormLabel>
+                  <FormLabel className="!mt-0">Mistral</FormLabel>
                 </FormItem>
               )}
             />
@@ -201,14 +164,14 @@ export function ExperimentForm({
               control={form.control}
               name="google"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                <FormItem className="flex items-center space-x-2">
                   <FormControl>
                     <Checkbox
                       checked={field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
-                  <FormLabel className="font-normal">Google</FormLabel>
+                  <FormLabel className="!mt-0">Google</FormLabel>
                 </FormItem>
               )}
             />
@@ -216,26 +179,23 @@ export function ExperimentForm({
               control={form.control}
               name="meta"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                <FormItem className="flex items-center space-x-2">
                   <FormControl>
                     <Checkbox
                       checked={field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
-                  <FormLabel className="font-normal">Meta</FormLabel>
+                  <FormLabel className="!mt-0">Meta</FormLabel>
                 </FormItem>
               )}
             />
           </div>
         </div>
 
-        <div className="flex justify-end space-x-4">
-          <Button variant="outline" type="button" onClick={onSubmit}>
-            Cancel
-          </Button>
+        <DialogFooter>
           <Button type="submit">Save</Button>
-        </div>
+        </DialogFooter>
       </form>
     </Form>
   );

@@ -40,7 +40,6 @@ export function ExperimentsList({
             <TableHead>Name</TableHead>
             <TableHead>System Prompt</TableHead>
             <TableHead>Test Prompt</TableHead>
-            <TableHead>Frequency</TableHead>
             <TableHead>Models</TableHead>
             <TableHead>Created At</TableHead>
             <TableHead className="text-right">Actions</TableHead>
@@ -59,7 +58,6 @@ export function ExperimentsList({
                 <TableCell className="font-medium">{experiment.name}</TableCell>
                 <TableCell>{experiment.systemPrompt}</TableCell>
                 <TableCell>{experiment.input_prompt}</TableCell>
-                <TableCell>{experiment.frequency}</TableCell>
                 <TableCell>
                   <div className="flex gap-2">
                     <span className="flex items-center gap-1">

@@ -49,17 +49,24 @@ describe('ExperimentParent', () => {
     (mockSupabase.from as jest.Mock).mockReturnValue({
       select: jest.fn(() => Promise.resolve({ 
         data: [
-          { id: 1, name: 'Test Exp', systemPrompt: 'Test Prompt', frequency: 'hourly', created_at: '2024-01-01' }
+          { 
+            id: 1, 
+            name: 'Test Exp', 
+            systemPrompt: 'Test Prompt',
+            input_prompt: 'Test Input',
+            created_at: '2024-01-01',
+            mistral: true,
+            google: false,
+            meta: true
+          }
         ], 
         error: null 
       })),
-      insert: jest.fn().mockResolvedValue({ data: null, error: new Error('Test error') }),
+      insert: jest.fn().mockResolvedValue({ data: null, error: null }),
       update: jest.fn().mockResolvedValue({ data: null, error: null }),
       delete: mockDelete,
-      url: '',
-      headers: {},
-      upsert: jest.fn(),
     });
+
     render(<ExperimentParent />);
 
     // Click create button
@@ -67,8 +74,8 @@ describe('ExperimentParent', () => {
 
     // Fill out form
     await userEvent.type(screen.getByLabelText('Experiment Name'), 'New Experiment');
-    await userEvent.type(screen.getByLabelText('Status'), 'active');
-    await userEvent.click(screen.getByLabelText('Hourly'));
+    await userEvent.type(screen.getByLabelText('System Prompt'), 'New System Prompt');
+    await userEvent.type(screen.getByLabelText('Test Prompt'), 'New Test Prompt');
     
     // Submit form
     await userEvent.click(screen.getByText('Save'));
@@ -77,8 +84,8 @@ describe('ExperimentParent', () => {
     expect(mockSupabase.from('experiments').insert).toHaveBeenCalledWith([
       expect.objectContaining({
         name: 'New Experiment',
-        status: 'active',
-        frequency: 'hourly'
+        systemPrompt: 'New System Prompt',
+        input_prompt: 'New Test Prompt'
       })
     ]);
   });

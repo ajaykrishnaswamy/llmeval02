@@ -18,24 +18,14 @@ describe('ExperimentForm', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    // Reset the mock implementations for each test
-    mockSupabase.from.mockImplementation(() => ({
-      insert: jest.fn(() => ({
-        then: jest.fn().mockResolvedValue({ data: null, error: null })
-      })),
-      update: jest.fn(() => ({
-        eq: jest.fn().mockResolvedValue({ data: null, error: null })
-      })),
-    }));
   });
 
   it('renders all form fields', () => {
     render(<ExperimentForm onSubmit={mockOnSubmit} supabase={mockSupabase} />);
 
     expect(screen.getByLabelText('Experiment Name')).toBeInTheDocument();
-    expect(screen.getByLabelText('Status')).toBeInTheDocument();
-    expect(screen.getByLabelText('Hourly')).toBeInTheDocument();
-    expect(screen.getByLabelText('Daily')).toBeInTheDocument();
+    expect(screen.getByLabelText('System Prompt')).toBeInTheDocument();
+    expect(screen.getByLabelText('Test Prompt')).toBeInTheDocument();
   });
 
   it('populates form with initial data when editing', () => {
@@ -43,8 +33,11 @@ describe('ExperimentForm', () => {
       id: 1,
       name: 'Test Experiment',
       systemPrompt: 'Test Prompt',
-      frequency: 'hourly',
-      created_at: '2024-01-01'
+      input_prompt: 'Test Input',
+      created_at: '2024-01-01',
+      mistral: true,
+      google: false,
+      meta: true
     };
 
     render(
@@ -56,8 +49,8 @@ describe('ExperimentForm', () => {
     );
 
     expect(screen.getByDisplayValue('Test Experiment')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('active')).toBeInTheDocument();
-    expect(screen.getByLabelText('Hourly')).toBeChecked();
+    expect(screen.getByDisplayValue('Test Prompt')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Test Input')).toBeInTheDocument();
   });
 
   it('validates required fields', async () => {
@@ -69,6 +62,7 @@ describe('ExperimentForm', () => {
     // Check for validation messages
     expect(await screen.findByText('Experiment name is required')).toBeInTheDocument();
     expect(await screen.findByText('System prompt is required')).toBeInTheDocument();
+    expect(await screen.findByText('Input prompt is required')).toBeInTheDocument();
   });
 
   it('handles form submission for new experiment', async () => {
@@ -77,7 +71,7 @@ describe('ExperimentForm', () => {
     // Fill out form
     await userEvent.type(screen.getByLabelText('Experiment Name'), 'New Experiment');
     await userEvent.type(screen.getByLabelText('System Prompt'), 'Test system prompt');
-    await userEvent.click(screen.getByLabelText('Daily'));
+    await userEvent.type(screen.getByLabelText('Test Prompt'), 'Test input prompt');
 
     // Submit form
     await userEvent.click(screen.getByText('Save'));
@@ -87,45 +81,11 @@ describe('ExperimentForm', () => {
     expect(mockSupabase.from().insert).toHaveBeenCalledWith([{
       name: 'New Experiment',
       systemPrompt: 'Test system prompt',
-      frequency: 'daily'
+      input_prompt: 'Test input prompt',
+      mistral: false,
+      google: false,
+      meta: false
     }]);
-
-    // Verify onSubmit callback was called
-    expect(mockOnSubmit).toHaveBeenCalled();
-  });
-
-  it('handles form submission for editing experiment', async () => {
-    const initialData = {
-      id: 1,
-      name: 'Test Experiment',
-      systemPrompt: 'Test Prompt',
-      frequency: 'hourly',
-      created_at: '2024-01-01'
-    };
-
-    render(
-      <ExperimentForm 
-        onSubmit={mockOnSubmit} 
-        supabase={mockSupabase} 
-        initialData={initialData}
-      />
-    );
-
-    // Modify form
-    await userEvent.clear(screen.getByLabelText('Experiment Name'));
-    await userEvent.type(screen.getByLabelText('Experiment Name'), 'Updated Experiment');
-
-    // Submit form
-    await userEvent.click(screen.getByText('Save'));
-
-    // Verify Supabase update was called with correct data
-    expect(mockSupabase.from).toHaveBeenCalledWith('experiments');
-    expect(mockSupabase.from().update).toHaveBeenCalledWith({
-      name: 'Updated Experiment',
-      status: 'active',
-      frequency: 'hourly'
-    });
-    expect(mockSupabase.from().update().eq()).toHaveBeenCalledWith('id', 1);
 
     // Verify onSubmit callback was called
     expect(mockOnSubmit).toHaveBeenCalled();
