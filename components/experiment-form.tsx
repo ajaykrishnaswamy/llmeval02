@@ -19,6 +19,7 @@ import { Experiment } from "@/components/experiment";
 const formSchema = z.object({
   name: z.string().min(1, "Experiment name is required"),
   systemPrompt: z.string().min(1, "System prompt is required"),
+  input_prompt: z.string().min(1, "Input prompt is required"),
   frequency: z.enum(["hourly", "daily"]),
   mistral: z.boolean().default(false),
   google: z.boolean().default(false),
@@ -46,6 +47,7 @@ export function ExperimentForm({
     defaultValues: {
       name: initialData?.name || "",
       systemPrompt: initialData?.systemPrompt || "",
+      input_prompt: initialData?.input_prompt || "",
       frequency: (initialData?.frequency as "hourly" | "daily") || "hourly",
       mistral: initialData?.mistral || false,
       google: initialData?.google || false,
@@ -64,6 +66,7 @@ export function ExperimentForm({
           .update({
             name: values.name,
             systemPrompt: values.systemPrompt,
+            input_prompt: values.input_prompt,
             frequency: values.frequency,
             mistral: values.mistral,
             google: values.google,
@@ -78,6 +81,7 @@ export function ExperimentForm({
           .insert([{
             name: values.name,
             systemPrompt: values.systemPrompt,
+            input_prompt: values.input_prompt,
             frequency: values.frequency,
             mistral: values.mistral,
             google: values.google,
@@ -123,6 +127,19 @@ export function ExperimentForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>System Prompt</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="input_prompt"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Test Prompt</FormLabel>
               <FormControl>
                 <Input {...field} />
               </FormControl>
