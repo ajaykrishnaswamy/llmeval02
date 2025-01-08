@@ -1,202 +1,125 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Experiment } from "@/components/experiment";
-import { DialogFooter } from "@/components/ui/dialog";
-const formSchema = z.object({
-  name: z.string().min(1, "Experiment name is required"),
-  systemPrompt: z.string().min(1, "System prompt is required"),
-  input_prompt: z.string().min(1, "Input prompt is required"),
-  mistral: z.boolean().default(false),
-  google: z.boolean().default(false),
-  meta: z.boolean().default(false)
-});
+import { SupabaseClient } from "@supabase/supabase-js";
+import { Experiment } from "./experiment";
+import { Textarea } from "./ui/textarea";
 
-const models = [
-  { id: "o1", label: "O1" },
-  { id: "o2", label: "O2" },
-  { id: "claude", label: "Claude" },
-  { id: "openai", label: "Open AI" },
-];
-
-export function ExperimentForm({ 
-  onSubmit,
-  supabase,
-  initialData 
-}: { 
-  onSubmit: () => void;
-  supabase: any;
+interface ExperimentFormProps {
+  onSubmit: () => Promise<void>;
+  supabase: SupabaseClient;
   initialData?: Experiment | null;
-}) {
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: initialData?.name || "",
-      systemPrompt: initialData?.systemPrompt || "",
-      input_prompt: initialData?.input_prompt || "",
-      mistral: initialData?.mistral || false,
-      google: initialData?.google || false,
-      meta: initialData?.meta || false,
-    },
+}
+
+export function ExperimentForm({ onSubmit, supabase, initialData }: ExperimentFormProps) {
+  const [name, setName] = useState(initialData?.name || "");
+  const [systemPrompt, setSystemPrompt] = useState(initialData?.systemPrompt || "");
+  const [models, setModels] = useState({
+    mistral: initialData?.mistral || false,
+    google: initialData?.google || false,
+    meta: initialData?.meta || false,
   });
 
-  async function onFormSubmit(values: z.infer<typeof formSchema>) {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
     try {
-      let error;
-      
       if (initialData?.id) {
-        const { error: updateError } = await supabase
+        // Update existing experiment
+        await supabase
           .from("experiments")
           .update({
-            name: values.name,
-            systemPrompt: values.systemPrompt,
-            input_prompt: values.input_prompt,
-            mistral: values.mistral,
-            google: values.google,
-            meta: values.meta,
+            name,
+            systemPrompt,
+            mistral: models.mistral,
+            google: models.google,
+            meta: models.meta
           })
-          .eq('id', initialData.id);
-        error = updateError;
+          .eq("id", initialData.id);
       } else {
-        const { error: insertError } = await supabase
-          .from("experiments")
-          .insert([{
-            name: values.name,
-            systemPrompt: values.systemPrompt,
-            input_prompt: values.input_prompt,
-            mistral: values.mistral,
-            google: values.google,
-            meta: values.meta,
-          }]);
-        error = insertError;
+        // Create new experiment
+        await supabase.from("experiments").insert([
+          {
+            name,
+            systemPrompt,
+            mistral: models.mistral,
+            google: models.google,
+            meta: models.meta
+          },
+        ]);
       }
-
-      if (error) {
-        console.error("Error saving experiment:", error.message);
-      } else {
-        console.log("Experiment saved successfully");
-        onSubmit();
-      }
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        console.error("Unexpected error:", err.message);
-      } else {
-        console.error("Unexpected error:", err);
-      }
+      await onSubmit();
+    } catch (error) {
+      console.error("Error saving experiment:", error);
     }
-  }
+  };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onFormSubmit)} className="space-y-8">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Experiment Name</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label htmlFor="name" className="block text-sm font-medium mb-1">
+          Experiment Name
+        </label>
+        <Input
+          id="name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
         />
-        <FormField
-          control={form.control}
-          name="systemPrompt"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>System Prompt</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+      </div>
+
+      <div>
+        <label htmlFor="systemPrompt" className="block text-sm font-medium mb-1">
+          System Prompt
+        </label>
+        <Textarea
+          id="systemPrompt"
+          value={systemPrompt}
+          onChange={(e) => setSystemPrompt(e.target.value)}
+          required
         />
-        <FormField
-          control={form.control}
-          name="input_prompt"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Test Prompt</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <div className="space-y-4">
-          <div className="flex items-center space-x-4">
-            <FormField
-              control={form.control}
-              name="mistral"
-              render={({ field }) => (
-                <FormItem className="flex items-center space-x-2">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormLabel className="!mt-0">Mistral</FormLabel>
-                </FormItem>
-              )}
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">Models</label>
+        <div className="space-y-2">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="mistral"
+              checked={models.mistral}
+              onCheckedChange={(checked) =>
+                setModels({ ...models, mistral: checked as boolean })
+              }
             />
-            <FormField
-              control={form.control}
-              name="google"
-              render={({ field }) => (
-                <FormItem className="flex items-center space-x-2">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormLabel className="!mt-0">Google</FormLabel>
-                </FormItem>
-              )}
+            <label htmlFor="mistral">Mistral</label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="google"
+              checked={models.google}
+              onCheckedChange={(checked) =>
+                setModels({ ...models, google: checked as boolean })
+              }
             />
-            <FormField
-              control={form.control}
-              name="meta"
-              render={({ field }) => (
-                <FormItem className="flex items-center space-x-2">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormLabel className="!mt-0">Meta</FormLabel>
-                </FormItem>
-              )}
+            <label htmlFor="google">Google</label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="meta"
+              checked={models.meta}
+              onCheckedChange={(checked) =>
+                setModels({ ...models, meta: checked as boolean })
+              }
             />
+            <label htmlFor="meta">Meta</label>
           </div>
         </div>
+      </div>
 
-        <DialogFooter>
-          <Button type="submit">Save</Button>
-        </DialogFooter>
-      </form>
-    </Form>
+      <Button type="submit">Save</Button>
+    </form>
   );
 }

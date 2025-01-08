@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { ExperimentsList } from "@/components/experiments-list";
 import {
@@ -13,6 +13,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { ExperimentForm } from "@/components/experiment-form";
 import { Experiment } from "@/components/experiment";
+import { TestCasesList } from "./test-cases-list";
+import { TestCase } from "@/types/test-case";
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_KEY;
@@ -27,6 +29,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 export function ExperimentParent() {
   const [experiments, setExperiments] = useState<Experiment[]>([]);
+  const [testCases, setTestCases] = useState<TestCase[]>([]);
   const [open, setOpen] = useState(false);
   const [editingExperiment, setEditingExperiment] = useState<Experiment | null>(null);
 
@@ -38,6 +41,30 @@ export function ExperimentParent() {
       setExperiments(data || []);
     }
   }, []);
+
+  const fetchTestCases = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('test_cases')
+      .select(`
+        *,
+        experiment:experiments (
+          id,
+          name
+        )
+      `);
+
+    if (error) {
+      console.error('Error fetching test cases:', error);
+      return;
+    }
+
+    setTestCases(data || []);
+  }, []);
+
+  useEffect(() => {
+    fetchExperiments();
+    fetchTestCases();
+  }, [fetchExperiments, fetchTestCases]);
 
   const handleExperimentAdded = useCallback(async () => {
     await fetchExperiments();
@@ -65,6 +92,63 @@ export function ExperimentParent() {
       await fetchExperiments();
     }
   }, [fetchExperiments]);
+
+  const saveTestCase = async (testCaseData: Omit<TestCase, 'id' | 'created_at'>) => {
+    try {
+      const { data, error } = await supabase
+        .from('test_cases')
+        .insert([{
+          experiment_id: testCaseData.experiment_id,
+          test_case: testCaseData.test_case,
+          expected_output: testCaseData.expected_output,
+          mistral_output: null,
+          mistral_factually: false,
+          meta_output: null,
+          meta_factually: false,
+          google_output: null,
+          google_factually: false
+        }])
+        .select();
+
+      if (error) {
+        throw new Error(`Error saving test case: ${error.message}`);
+      }
+
+      await fetchTestCases();
+      return data[0];
+    } catch (error) {
+      console.error('Error saving test case:', error);
+      throw error;
+    }
+  };
+
+  const updateTestCase = async (id: number, updates: Partial<TestCase>) => {
+    const { experiment, ...updateData } = updates;
+    
+    const { error } = await supabase
+      .from('test_cases')
+      .update(updateData)
+      .eq('id', id);
+
+    if (error) {
+      throw new Error(`Error updating test case: ${error.message}`);
+    }
+
+    await fetchTestCases();
+  };
+
+  const deleteTestCase = async (id: number) => {
+    const { error } = await supabase
+      .from('test_cases')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      throw new Error(`Error deleting test case: ${error.message}`);
+    }
+
+    await fetchTestCases();
+  };
 
   return (
     <div className="space-y-4">
@@ -95,6 +179,12 @@ export function ExperimentParent() {
         fetchExperiments={fetchExperiments}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        onSaveTestCase={saveTestCase}
+      />
+      <TestCasesList 
+        testCases={testCases}
+        onEdit={updateTestCase}
+        onDelete={deleteTestCase}
       />
     </div>
   );
