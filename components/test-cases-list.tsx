@@ -66,25 +66,19 @@ export function TestCasesList({ testCases, onEdit, onDelete }: TestCasesListProp
                 <TableCell>{testCase.test_case}</TableCell>
                 <TableCell>{testCase.expected_output}</TableCell>
                 <TableCell>
-                  {testCase.mistral_factually ? (
-                    <Check className="h-4 w-4 text-green-500" />
-                  ) : (
-                    <X className="h-4 w-4 text-red-500" />
-                  )}
+                  <div className="max-w-[200px] overflow-hidden text-ellipsis">
+                    {testCase.mistral_output || 'No output'}
+                  </div>
                 </TableCell>
                 <TableCell>
-                  {testCase.meta_factually ? (
-                    <Check className="h-4 w-4 text-green-500" />
-                  ) : (
-                    <X className="h-4 w-4 text-red-500" />
-                  )}
+                  <div className="max-w-[200px] overflow-hidden text-ellipsis">
+                    {testCase.meta_output || 'No output'}
+                  </div>
                 </TableCell>
                 <TableCell>
-                  {testCase.google_factually ? (
-                    <Check className="h-4 w-4 text-green-500" />
-                  ) : (
-                    <X className="h-4 w-4 text-red-500" />
-                  )}
+                  <div className="max-w-[200px] overflow-hidden text-ellipsis">
+                    {testCase.google_output || 'No output'}
+                  </div>
                 </TableCell>
                 <TableCell className="text-right">
                   <Button variant="ghost" size="sm" onClick={() => onEdit(testCase.id, testCase)}>

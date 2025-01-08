@@ -34,20 +34,24 @@ export function TestCaseDialog({ open, onOpenChange, experiment, onSaveTestCase 
         callGroqAPI(experiment.systemPrompt, testCase, "meta"),
         callGroqAPI(experiment.systemPrompt, testCase, "google"),
       ]);
-      console.log("Mistral result:", mistralResult.output, "Meta result:", metaResult.output, "Google result:", googleResult.output);
+      
+      // Log the full response objects for debugging
 
-      // Save test case and responses
-      await onSaveTestCase({
+      // Ensure we're passing strings, not null values
+      const testCaseData = {
         experiment_id: experiment.id,
         expected_output: expectedOutput,
         test_case: testCase,
-        mistral_output: mistralResult.output,
+        mistral_output: mistralResult.output || '',  // Convert null to empty string
         mistral_factually: mistralResult.factually,
-        meta_output: metaResult.output,
+        meta_output: metaResult.output || '',
         meta_factually: metaResult.factually,
-        google_output: googleResult.output,
+        google_output: googleResult.output || '',
         google_factually: googleResult.factually,
-      });
+      };
+
+      console.log("Saving test case data:", testCaseData);
+      await onSaveTestCase(testCaseData);
 
       toast({
         title: "Success",
@@ -58,6 +62,7 @@ export function TestCaseDialog({ open, onOpenChange, experiment, onSaveTestCase 
       setTestCase("");
       setExpectedOutput("");
     } catch (error) {
+      console.error('Error in handleSubmit:', error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "An unknown error occurred",

@@ -101,12 +101,12 @@ export function ExperimentParent() {
           experiment_id: testCaseData.experiment_id,
           test_case: testCaseData.test_case,
           expected_output: testCaseData.expected_output,
-          mistral_output: null,
-          mistral_factually: false,
-          meta_output: null,
-          meta_factually: false,
-          google_output: null,
-          google_factually: false
+          mistral_output: testCaseData.mistral_output,
+          mistral_factually: testCaseData.mistral_factually,
+          meta_output: testCaseData.meta_output,
+          meta_factually: testCaseData.meta_factually,
+          google_output: testCaseData.google_output,
+          google_factually: testCaseData.google_factually
         }])
         .select();
 

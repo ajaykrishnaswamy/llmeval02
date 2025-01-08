@@ -36,11 +36,22 @@ export async function callGroqAPI(systemPrompt: string, testCase: string, model:
     }
 
     const data = await response.json();
+    
+    // Add error checking for response structure
+    if (!data.choices?.[0]?.message?.content) {
+      throw new Error('Invalid response format from Groq API');
+    }
+
     const output = data.choices[0].message.content;
-    // Simple factuality check - you might want to implement more sophisticated logic
-    const factually = !output.toLowerCase().includes('error') && 
-                     !output.toLowerCase().includes('unable to') &&
-                     output.length > 0;
+    
+    // More robust factuality check
+    const factually = Boolean(
+      output && 
+      output.length > 0 && 
+      !output.toLowerCase().includes('error') && 
+      !output.toLowerCase().includes('unable to')
+    );
+
     return {
       output,
       factually
