@@ -26,6 +26,16 @@ export function TestCaseDialog({ open, onOpenChange, experiment, onSaveTestCase 
     e.preventDefault();
     if (!experiment) return;
     
+    // Validation: Check if both fields are filled
+    if (!testCase.trim() || !expectedOutput.trim()) {
+      toast({
+        title: "Incomplete Fields",
+        description: "Please fill in both the Test Case and Expected Output fields.",
+        variant: "destructive",
+      });
+      return; // Exit the function if validation fails
+    }
+
     setIsLoading(true);
     try {
       // Run all API calls in parallel and wait for them to complete
@@ -48,6 +58,12 @@ export function TestCaseDialog({ open, onOpenChange, experiment, onSaveTestCase 
         meta_factually: metaResult.factually,
         google_output: googleResult.output,
         google_factually: googleResult.factually,
+        unittest_input_meta: "",
+        unittest_input_google: "",
+        unittest_input_mistral: "",
+        unittest_output_meta: "",
+        unittest_output_google: "",
+        unittest_output_mistral: "",
       });
 
       // Only close dialog after everything is saved

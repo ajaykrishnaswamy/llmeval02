@@ -15,6 +15,8 @@ import { ExperimentForm } from "@/components/experiment-form";
 import { Experiment } from "@/components/experiment";
 import { TestCasesList } from "./test-cases-list";
 import { TestCase } from "@/types/test-case";
+import { toast } from "@/components/ui/use-toast";
+import { callGroqAPI } from "@/lib/groq";
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_KEY;
@@ -25,6 +27,29 @@ if (!supabaseUrl || !supabaseKey) {
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+const evaluationPrompt = `You are a strict evaluator of LLM responses. Your task is to evaluate if the LLM response matches the expected output, considering the original system prompt and user input.
+
+Task: Evaluate if the LLM response is factually accurate compared to the expected output.
+Consider:
+1. Does it directly answer the task specified in the system prompt?
+2. Does it match the expected output format?
+3. Is the information correct when compared to the expected output?
+
+Return only a JSON object with this format:
+{
+  "factuality_score": number (0-100)
+}
+
+Example:
+{"factuality_score": 85}
+
+Note: Score should be:
+- 100: Perfect match with expected output
+- 75: Minor differences but factually correct
+- 50: Partially correct with some errors
+- 25: Major errors but some correct elements
+- 0: Completely incorrect or irrelevant`;
+
 
 
 export function ExperimentParent() {
@@ -32,6 +57,30 @@ export function ExperimentParent() {
   const [testCases, setTestCases] = useState<TestCase[]>([]);
   const [open, setOpen] = useState(false);
   const [editingExperiment, setEditingExperiment] = useState<Experiment | null>(null);
+  const [isRunning, setIsRunning] = useState(false);
+
+
+  const getFactualityScore = useCallback(async (jsonString: string): Promise<number | null> => {
+    try {
+        // Parse the JSON string
+        const parsedData = JSON.parse(jsonString);
+
+        // Access the factuality_score field
+        if (parsedData && typeof parsedData.factuality_score === "number") {
+          console.log("found the factuality score", parsedData.factuality_score);
+            return parsedData.factuality_score;
+        } else {
+            throw new Error("factuality_score field is missing or invalid.");
+        }
+    } catch (error) {
+        if (error instanceof Error) {
+            console.error("Error parsing JSON:", error.message);
+        } else {
+            console.error("Unexpected error:", error);
+        }
+        return null; // Return null or handle the error as needed
+    }
+}, []);
 
   const fetchExperiments = useCallback(async () => {
     const { data, error } = await supabase.from("experiments").select("*");
@@ -150,6 +199,94 @@ export function ExperimentParent() {
     await fetchTestCases();
   };
 
+  const handleRunExperiment = async (experimentId: number) => {
+    setIsRunning(true);
+    setTestCases([]);
+
+    try {
+      // Fetch the experiment details to get the systemPrompt
+      const { data: experiment, error: experimentError } = await supabase
+        .from('experiments')
+        .select('systemPrompt')
+        .eq('id', experimentId)
+        .single();
+
+      if (experimentError) {
+        throw new Error(`Error fetching experiment: ${experimentError.message}`);
+      }
+
+      // Fetch all test cases for this experiment
+      const { data: testCases } = await supabase
+        .from('test_cases')
+        .select('*')
+        .eq('experiment_id', experimentId);
+
+      if (!testCases?.length) {
+        toast({
+          title: "No test cases",
+          description: "Add some test cases first",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Run each test case
+      for (const testCase of testCases) {
+        const [mistralResult, metaResult, googleResult] = await Promise.all([
+          callGroqAPI(experiment.systemPrompt, testCase.test_case, "mistral"),
+          callGroqAPI(experiment.systemPrompt, testCase.test_case, "meta"),
+          callGroqAPI(experiment.systemPrompt, testCase.test_case, "google")
+        ]);
+
+        const [mistralEval, metaEval, googleEval] = await Promise.all([
+          callGroqAPI(evaluationPrompt, "LLM Response: " + mistralResult.output + "\nExpected Output: " + testCase.expected_output, "mistral"),
+          callGroqAPI(evaluationPrompt, "LLM Response: " + metaResult.output + "\nExpected Output: " + testCase.expected_output, "mistral"),
+          callGroqAPI(evaluationPrompt, "LLM Response: " + googleResult.output + "\nExpected Output: " + testCase.expected_output, "mistral"),
+        ]);
+
+        const mistralFactualityScore = await getFactualityScore(mistralEval.output);
+        const metaFactualityScore = await getFactualityScore(metaEval.output);
+        const googleFactualityScore = await getFactualityScore(googleEval.output);
+
+        // Update test case with new results
+        await supabase
+          .from('test_cases')
+          .update({
+            mistral_output: mistralResult.output,
+            mistral_factually: (mistralFactualityScore !== null && mistralFactualityScore > 50) ? true : false,
+            meta_output: metaResult.output,
+            meta_factually: (metaFactualityScore !== null && metaFactualityScore > 50) ? true : false,
+            google_output: googleResult.output,
+            google_factually: (googleFactualityScore !== null && googleFactualityScore > 50) ? true : false,
+            unittest_input_mistral: experiment.systemPrompt + "\n" + testCase.test_case,
+            unittest_input_meta: experiment.systemPrompt + "\n" + testCase.test_case,
+            unittest_input_google: experiment.systemPrompt + "\n" + testCase.test_case,
+            unittest_output_mistral: mistralEval.output,
+            unittest_output_meta: metaEval.output,
+            unittest_output_google: googleEval.output,
+          })
+          .eq('id', testCase.id);
+      }
+
+      toast({
+        title: "Success",
+        description: "All test cases have been run",
+      });
+
+      // Refresh the test cases list
+      fetchTestCases();
+    } catch (error) {
+      console.error('Error running experiment:', error);
+      toast({
+        title: "Error",
+        description: "Failed to run experiment",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRunning(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
@@ -180,12 +317,19 @@ export function ExperimentParent() {
         onEdit={handleEdit}
         onDelete={handleDelete}
         onSaveTestCase={saveTestCase}
+        onRunExperiment={handleRunExperiment}
       />
-      <TestCasesList 
-        testCases={testCases}
-        onEdit={updateTestCase}
-        onDelete={deleteTestCase}
-      />
+      <div className="rounded-md border">
+        {isRunning ? (
+          <div className="text-center text-lg">Running...</div>
+        ) : (
+          <TestCasesList 
+            testCases={testCases}
+            onEdit={updateTestCase}
+            onDelete={deleteTestCase}
+          />
+        )}
+      </div>
     </div>
   );
 } 

@@ -14,8 +14,8 @@ import {
 import { useState } from "react";
 import { TestCase } from "@/types/test-case";
 import { Textarea } from "@/components/ui/textarea";
-import { evaluateFactuality } from "@/lib/groq";
 import { cn } from "@/lib/utils";
+import { callGroqAPI } from "@/lib/groq";
 
 
 interface TestCasesListProps {
@@ -35,8 +35,20 @@ const DEFAULT_TEST_CASE: TestCase = {
   meta_factually: false,
   google_output: '',
   google_factually: false,
+  unittest_input_meta: '',
+  unittest_input_google: '',
+  unittest_input_mistral: '',
+  unittest_output_meta: '',
+  unittest_output_google: '',
+  unittest_output_mistral: '',
   created_at: new Date().toISOString()
 };
+
+
+
+
+
+
 
 function getScoreColor(factually: boolean) {
   return factually 
@@ -67,14 +79,9 @@ export function TestCasesList({ testCases, onEdit, onDelete }: TestCasesListProp
     
     // Then evaluate factuality
     setEvaluating(prev => ({ ...prev, [`${testCaseId}-${model}`]: true }));
-    
+
     try {
-      const score = await evaluateFactuality(
-        testCase.experiment?.systemPrompt || '',
-        testCase.test_case,
-        testCase.expected_output,
-        value
-      );
+      const score = 0;
 
       await onEdit(testCaseId, {
         [`${model}_factually`]: score
@@ -98,6 +105,9 @@ export function TestCasesList({ testCases, onEdit, onDelete }: TestCasesListProp
               <TableHead>Mistral</TableHead>
               <TableHead>Meta</TableHead>
               <TableHead>Google</TableHead>
+              <TableHead>Unit Test Output Meta</TableHead>
+              <TableHead>Unit Test Output Google</TableHead>
+              <TableHead>Unit Test Output Mistral</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -199,6 +209,9 @@ export function TestCasesList({ testCases, onEdit, onDelete }: TestCasesListProp
                     )}
                   </div>
                 </TableCell>
+                <TableCell>{testCase.unittest_output_meta}</TableCell>
+                <TableCell>{testCase.unittest_output_google}</TableCell>
+                <TableCell>{testCase.unittest_output_mistral}</TableCell>
                 <TableCell className="text-right space-x-2">
                   <Button variant="ghost" size="sm" onClick={() => onEdit(testCase.id, testCase)}>
                     Edit

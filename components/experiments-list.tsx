@@ -23,6 +23,7 @@ interface ExperimentsListProps {
   onEdit: (experiment: Experiment) => void;
   onDelete: (id: number) => void;
   onSaveTestCase: (testCase: Omit<TestCase, 'id' | 'created_at'>) => Promise<void>;
+  onRunExperiment: (experimentId: number) => Promise<void>;
 }
 
 export function ExperimentsList({ 
@@ -30,7 +31,8 @@ export function ExperimentsList({
   fetchExperiments, 
   onEdit, 
   onDelete, 
-  onSaveTestCase 
+  onSaveTestCase, 
+  onRunExperiment 
 }: ExperimentsListProps) {
   const [selectedExperiment, setSelectedExperiment] = useState<Experiment | null>(null);
   const [isTestCaseDialogOpen, setIsTestCaseDialogOpen] = useState(false);
@@ -98,6 +100,15 @@ export function ExperimentsList({
                       className="text-red-500 hover:text-red-700"
                     >
                       Delete
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onRunExperiment(experiment.id)}
+                      className="text-blue-500 hover:text-blue-700"
+                    >
+                      <Play className="h-4 w-4 mr-1" />
+                      Run
                     </Button>
                     <Button
                       size="sm"
