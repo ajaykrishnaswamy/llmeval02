@@ -1,3 +1,5 @@
+import { Experiment } from "@/components/experiment";
+
 export interface TestCase {
   id: number;
   experiment_id: number;
@@ -10,8 +12,5 @@ export interface TestCase {
   google_output: string | null;
   google_factually: boolean;
   created_at: string;
-  experiment?: {
-    id: number;
-    name: string;
-  };
+  experiment?: Experiment;
 } 

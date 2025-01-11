@@ -28,39 +28,37 @@ export function TestCaseDialog({ open, onOpenChange, experiment, onSaveTestCase 
     
     setIsLoading(true);
     try {
-      // Call Groq API for each model
-      const [mistralResult, metaResult, googleResult] = await Promise.all([
+      // Run all API calls in parallel and wait for them to complete
+      const results = await Promise.all([
         callGroqAPI(experiment.systemPrompt, testCase, "mistral"),
         callGroqAPI(experiment.systemPrompt, testCase, "meta"),
-        callGroqAPI(experiment.systemPrompt, testCase, "google"),
+        callGroqAPI(experiment.systemPrompt, testCase, "google")
       ]);
-      
-      // Log the full response objects for debugging
 
-      // Ensure we're passing strings, not null values
-      const testCaseData = {
+      const [mistralResult, metaResult, googleResult] = results;
+
+      // Save test case after API calls are complete
+      await onSaveTestCase({
         experiment_id: experiment.id,
-        expected_output: expectedOutput,
         test_case: testCase,
-        mistral_output: mistralResult.output || '',  // Convert null to empty string
+        expected_output: expectedOutput,
+        mistral_output: mistralResult.output,
         mistral_factually: mistralResult.factually,
-        meta_output: metaResult.output || '',
+        meta_output: metaResult.output,
         meta_factually: metaResult.factually,
-        google_output: googleResult.output || '',
+        google_output: googleResult.output,
         google_factually: googleResult.factually,
-      };
-
-      console.log("Saving test case data:", testCaseData);
-      await onSaveTestCase(testCaseData);
-
-      toast({
-        title: "Success",
-        description: "Test case created successfully",
       });
-      
+
+      // Only close dialog after everything is saved
       onOpenChange(false);
       setTestCase("");
       setExpectedOutput("");
+      
+      toast({
+        title: "Success",
+        description: "Test case added successfully",
+      });
     } catch (error) {
       console.error('Error in handleSubmit:', error);
       toast({
@@ -104,10 +102,10 @@ export function TestCaseDialog({ open, onOpenChange, experiment, onSaveTestCase 
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Running Test...
+                Adding...
               </>
             ) : (
-              'Run Test'
+              'Add Test Case'
             )}
           </Button>
         </form>

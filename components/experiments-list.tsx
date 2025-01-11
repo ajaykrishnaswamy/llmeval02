@@ -13,7 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Experiment } from "@/components/experiment";
-import { Check, X, Play } from "lucide-react";
+import { Check, X, Play, Plus } from "lucide-react";
 import { TestCaseDialog } from "@/components/test-case-dialog";
 import { TestCase } from "@/types/test-case";
 
@@ -51,7 +51,7 @@ export function ExperimentsList({
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead>System Prompt</TableHead>
+              <TableHead className="w-[400px]">System Prompt</TableHead>
               <TableHead>Models</TableHead>
               <TableHead>Created At</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -68,7 +68,11 @@ export function ExperimentsList({
               experiments.map((experiment) => (
                 <TableRow key={experiment.id}>
                   <TableCell className="font-medium">{experiment.name}</TableCell>
-                  <TableCell>{experiment.systemPrompt}</TableCell>
+                  <TableCell>
+                    <div className="max-w-[400px] overflow-hidden text-ellipsis whitespace-nowrap">
+                      {experiment.systemPrompt}
+                    </div>
+                  </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
                       <span className="flex items-center gap-1">
@@ -83,7 +87,7 @@ export function ExperimentsList({
                     </div>
                   </TableCell>
                   <TableCell>{new Date(experiment.created_at || '').toLocaleDateString()}</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right space-x-2">
                     <Button variant="ghost" size="sm" onClick={() => onEdit(experiment)}>
                       Edit
                     </Button>
@@ -96,13 +100,15 @@ export function ExperimentsList({
                       Delete
                     </Button>
                     <Button
-                      variant="default"
                       size="sm"
-                      onClick={() => handleRunClick(experiment)}
-                      className="ml-2 bg-blue-500 hover:bg-blue-600"
+                      className="bg-blue-500 hover:bg-blue-600 text-white"
+                      onClick={() => {
+                        setSelectedExperiment(experiment);
+                        setIsTestCaseDialogOpen(true);
+                      }}
                     >
-                      <Play className="h-4 w-4 mr-1" />
-                      Run
+                      <Plus className="h-4 w-4 mr-1" />
+                      Add
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -110,6 +116,15 @@ export function ExperimentsList({
             )}
           </TableBody>
         </Table>
+      </div>
+
+      <div className="mt-8">
+        <h3 className="text-lg font-medium mb-4">Test Cases</h3>
+        <div className="rounded-md border">
+          <Table>
+            {/* Test cases table content */}
+          </Table>
+        </div>
       </div>
 
       <TestCaseDialog
