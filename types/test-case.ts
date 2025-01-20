@@ -1,5 +1,3 @@
-import { Experiment } from "@/components/experiment";
-
 export interface TestCase {
   id: number;
   experiment_id: number;
@@ -18,5 +16,9 @@ export interface TestCase {
   unittest_output_google: string | null;
   unittest_output_mistral: string | null;
   created_at: string;
-  experiment?: Experiment;
+  experiment?: {
+    id: number;
+    name: string;
+    systemPrompt: string;
+  };
 } 

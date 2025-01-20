@@ -129,15 +129,6 @@ export function ExperimentsList({
         </Table>
       </div>
 
-      <div className="mt-8">
-        <h3 className="text-lg font-medium mb-4">Test Cases</h3>
-        <div className="rounded-md border">
-          <Table>
-            {/* Test cases table content */}
-          </Table>
-        </div>
-      </div>
-
       <TestCaseDialog
         open={isTestCaseDialogOpen}
         onOpenChange={setIsTestCaseDialogOpen}
