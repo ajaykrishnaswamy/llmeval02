@@ -47,31 +47,25 @@ export function ExperimentParent() {
   const [isRunning, setIsRunning] = useState(false);
 
   const fetchExperiments = useCallback(async () => {
-    const { data, error } = await supabase.from("experiments").select("*");
-    if (error) {
+    try {
+      const response = await fetch('/api/experiments');
+      if (!response.ok) throw new Error('Failed to fetch experiments');
+      const data = await response.json();
+      setExperiments(data);
+    } catch (error) {
       console.error("Error fetching experiments:", error);
-    } else {
-      setExperiments(data || []);
     }
   }, []);
 
   const fetchTestCases = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('test_cases')
-      .select(`
-        *,
-        experiment:experiments (
-          id,
-          name
-        )
-      `);
-
-    if (error) {
+    try {
+      const response = await fetch('/api/test-cases');
+      if (!response.ok) throw new Error('Failed to fetch test cases');
+      const data = await response.json();
+      setTestCases(data || []);
+    } catch (error) {
       console.error('Error fetching test cases:', error);
-      return;
     }
-
-    setTestCases(data || []);
   }, []);
 
   useEffect(() => {
@@ -94,41 +88,31 @@ export function ExperimentParent() {
     const confirmed = window.confirm("Are you sure you want to delete this experiment?");
     if (!confirmed) return;
 
-    const { error } = await supabase
-      .from("experiments")
-      .delete()
-      .eq("id", id);
-
-    if (error) {
-      console.error("Error deleting experiment:", error);
-    } else {
+    try {
+      const response = await fetch(`/api/experiments/${id}`, {
+        method: 'DELETE'
+      });
+      if (!response.ok) throw new Error('Failed to delete experiment');
       await fetchExperiments();
+    } catch (error) {
+      console.error("Error deleting experiment:", error);
     }
   }, [fetchExperiments]);
 
   const saveTestCase = async (testCaseData: Omit<TestCase, 'id' | 'created_at'>) => {
     try {
-      const { data, error } = await supabase
-        .from('test_cases')
-        .insert([{
-          experiment_id: testCaseData.experiment_id,
-          test_case: testCaseData.test_case,
-          expected_output: testCaseData.expected_output,
-          mistral_output: testCaseData.mistral_output,
-          mistral_factually: testCaseData.mistral_factually,
-          meta_output: testCaseData.meta_output,
-          meta_factually: testCaseData.meta_factually,
-          google_output: testCaseData.google_output,
-          google_factually: testCaseData.google_factually
-        }])
-        .select();
+      const response = await fetch('/api/test-cases', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(testCaseData),
+      });
 
-      if (error) {
-        throw new Error(`Error saving test case: ${error.message}`);
-      }
-
+      if (!response.ok) throw new Error('Failed to save test case');
+      const data = await response.json();
       await fetchTestCases();
-      return data[0];
+      return data;
     } catch (error) {
       console.error('Error saving test case:', error);
       throw error;
@@ -136,31 +120,35 @@ export function ExperimentParent() {
   };
 
   const updateTestCase = async (id: number, updates: Partial<TestCase>) => {
-    const { experiment, ...updateData } = updates;
-    
-    const { error } = await supabase
-      .from('test_cases')
-      .update(updateData)
-      .eq('id', id);
+    try {
+      const response = await fetch(`/api/test-cases/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updates),
+      });
 
-    if (error) {
-      throw new Error(`Error updating test case: ${error.message}`);
+      if (!response.ok) throw new Error('Failed to update test case');
+      await fetchTestCases();
+    } catch (error) {
+      console.error('Error updating test case:', error);
+      throw error;
     }
-
-    await fetchTestCases();
   };
 
   const deleteTestCase = async (id: number) => {
-    const { error } = await supabase
-      .from('test_cases')
-      .delete()
-      .eq('id', id);
+    try {
+      const response = await fetch(`/api/test-cases/${id}`, {
+        method: 'DELETE',
+      });
 
-    if (error) {
-      throw new Error(`Error deleting test case: ${error.message}`);
+      if (!response.ok) throw new Error('Failed to delete test case');
+      await fetchTestCases();
+    } catch (error) {
+      console.error('Error deleting test case:', error);
+      throw error;
     }
-
-    await fetchTestCases();
   };
 
   const handleRunExperiment = async (experimentId: number) => {
