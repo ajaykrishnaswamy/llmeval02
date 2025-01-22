@@ -1,13 +1,19 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { callGroqAPI } from '@/lib/groq';
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.PRIVATE_SUPABASE_URL!,
   process.env.PRIVATE_SUPABASE_KEY!
 );
 
-const evaluationPrompt = `You are a strict evaluator of LLM responses...`; // Same as before
+// Helper function to get base URL
+const getBaseUrl = () => {
+  if (process.env.NEXT_PUBLIC_BASE_URL) {
+    return process.env.NEXT_PUBLIC_BASE_URL;
+  }
+  // Fallback for server environment
+  return 'http://localhost:3000';
+};
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -37,29 +43,47 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Process each test case
     for (const testCase of testCases) {
-      const [mistralResult, metaResult, googleResult] = await Promise.all([
-        callGroqAPI(experiment.systemPrompt, testCase.test_case, "mistral"),
-        callGroqAPI(experiment.systemPrompt, testCase.test_case, "meta"),
-        callGroqAPI(experiment.systemPrompt, testCase.test_case, "google")
-      ]);
+      // Use the helper function to get the base URL
+      const response = await fetch(`${getBaseUrl()}/api/groq/evaluate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          systemPrompt: experiment.systemPrompt,
+          userInput: testCase.test_case,
+          expectedOutput: testCase.expected_output,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to evaluate test case');
+      }
+
+      const results = await response.json();
 
       // Update test case with results
       await supabase
         .from('test_cases')
         .update({
-          mistral_output: mistralResult.output,
-          mistral_factually: mistralResult.factually,
-          meta_output: metaResult.output,
-          meta_factually: metaResult.factually,
-          google_output: googleResult.output,
-          google_factually: googleResult.factually,
+          mistral_output: results.mistral.output,
+          mistral_factually: results.mistral.factually,
+          meta_output: results.meta.output,
+          meta_factually: results.meta.factually,
+          google_output: results.google.output,
+          google_factually: results.google.factually,
+          unittest_input_mistral: `${experiment.systemPrompt}\n${testCase.test_case}`,
+          unittest_input_meta: `${experiment.systemPrompt}\n${testCase.test_case}`,
+          unittest_input_google: `${experiment.systemPrompt}\n${testCase.test_case}`,
+          unittest_output_mistral: results.mistral.evaluation,
+          unittest_output_meta: results.meta.evaluation,
+          unittest_output_google: results.google.evaluation,
         })
         .eq('id', testCase.id);
     }
 
     return res.status(200).json({ message: 'Experiment run successfully' });
   } catch (error) {
-    console.error('Error running experiment:', error);
     return res.status(500).json({ error: 'Error running experiment' });
   }
 } 

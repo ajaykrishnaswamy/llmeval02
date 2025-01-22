@@ -4,17 +4,15 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { SupabaseClient } from "@supabase/supabase-js";
 import { Experiment } from "./experiment";
 import { Textarea } from "./ui/textarea";
 
 interface ExperimentFormProps {
   onSubmit: () => Promise<void>;
-  supabase: SupabaseClient;
   initialData?: Experiment | null;
 }
 
-export function ExperimentForm({ onSubmit, supabase, initialData }: ExperimentFormProps) {
+export function ExperimentForm({ onSubmit, initialData }: ExperimentFormProps) {
   const [name, setName] = useState(initialData?.name || "");
   const [systemPrompt, setSystemPrompt] = useState(initialData?.systemPrompt || "");
   const [models, setModels] = useState({
@@ -29,27 +27,42 @@ export function ExperimentForm({ onSubmit, supabase, initialData }: ExperimentFo
     try {
       if (initialData?.id) {
         // Update existing experiment
-        await supabase
-          .from("experiments")
-          .update({
+        const response = await fetch(`/api/experiments/${initialData.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
             name,
             systemPrompt,
             mistral: models.mistral,
             google: models.google,
             meta: models.meta
-          })
-          .eq("id", initialData.id);
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to update experiment');
+        }
       } else {
         // Create new experiment
-        await supabase.from("experiments").insert([
-          {
+        const response = await fetch('/api/experiments', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
             name,
             systemPrompt,
             mistral: models.mistral,
             google: models.google,
             meta: models.meta
-          },
-        ]);
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to create experiment');
+        }
       }
       await onSubmit();
     } catch (error) {

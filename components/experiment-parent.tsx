@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
 import { ExperimentsList } from "@/components/experiments-list";
 import {
   Dialog,
@@ -16,16 +15,6 @@ import { Experiment } from "@/components/experiment";
 import { TestCasesList } from "./test-cases-list";
 import { TestCase } from "@/types/test-case";
 import { toast } from "@/components/ui/use-toast";
-import { callGroqAPI } from "@/lib/groq";
-// Initialize Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_KEY;
-
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Missing Supabase environment variables')
-}
-
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 const evaluationPrompt = `You are a strict evaluator of LLM responses. Your task is to evaluate if the LLM response matches the expected output, considering the original system prompt and user input.
 
@@ -36,8 +25,6 @@ Consider:
 3. Is the information correct when compared to the expected output?
 
 Return ONLY one of these two words: "Factual" or "Not Factual"`;
-
-
 
 export function ExperimentParent() {
   const [experiments, setExperiments] = useState<Experiment[]>([]);
@@ -53,7 +40,6 @@ export function ExperimentParent() {
       const data = await response.json();
       setExperiments(data);
     } catch (error) {
-      console.error("Error fetching experiments:", error);
     }
   }, []);
 
@@ -64,7 +50,6 @@ export function ExperimentParent() {
       const data = await response.json();
       setTestCases(data || []);
     } catch (error) {
-      console.error('Error fetching test cases:', error);
     }
   }, []);
 
@@ -95,7 +80,6 @@ export function ExperimentParent() {
       if (!response.ok) throw new Error('Failed to delete experiment');
       await fetchExperiments();
     } catch (error) {
-      console.error("Error deleting experiment:", error);
     }
   }, [fetchExperiments]);
 
@@ -114,7 +98,6 @@ export function ExperimentParent() {
       await fetchTestCases();
       return data;
     } catch (error) {
-      console.error('Error saving test case:', error);
       throw error;
     }
   };
@@ -132,7 +115,6 @@ export function ExperimentParent() {
       if (!response.ok) throw new Error('Failed to update test case');
       await fetchTestCases();
     } catch (error) {
-      console.error('Error updating test case:', error);
       throw error;
     }
   };
@@ -146,7 +128,6 @@ export function ExperimentParent() {
       if (!response.ok) throw new Error('Failed to delete test case');
       await fetchTestCases();
     } catch (error) {
-      console.error('Error deleting test case:', error);
       throw error;
     }
   };
@@ -156,64 +137,12 @@ export function ExperimentParent() {
     setTestCases([]);
 
     try {
-      // Fetch the experiment details to get the systemPrompt
-      const { data: experiment, error: experimentError } = await supabase
-        .from('experiments')
-        .select('systemPrompt')
-        .eq('id', experimentId)
-        .single();
+      const response = await fetch(`/api/experiments/${experimentId}/run`, {
+        method: 'POST',
+      });
 
-      if (experimentError) {
-        throw new Error(`Error fetching experiment: ${experimentError.message}`);
-      }
-
-      // Fetch all test cases for this experiment
-      const { data: testCases } = await supabase
-        .from('test_cases')
-        .select('*')
-        .eq('experiment_id', experimentId);
-
-      if (!testCases?.length) {
-        toast({
-          title: "No test cases",
-          description: "Add some test cases first",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Run each test case
-      for (const testCase of testCases) {
-        const [mistralResult, metaResult, googleResult] = await Promise.all([
-          callGroqAPI(experiment.systemPrompt, testCase.test_case, "mistral"),
-          callGroqAPI(experiment.systemPrompt, testCase.test_case, "meta"),
-          callGroqAPI(experiment.systemPrompt, testCase.test_case, "google")
-        ]);
-
-        const [mistralEval, metaEval, googleEval] = await Promise.all([
-          callGroqAPI(evaluationPrompt, "LLM Response: " + mistralResult.output + "\nExpected Output: " + testCase.expected_output, "mistral"),
-          callGroqAPI(evaluationPrompt, "LLM Response: " + metaResult.output + "\nExpected Output: " + testCase.expected_output, "mistral"),
-          callGroqAPI(evaluationPrompt, "LLM Response: " + googleResult.output + "\nExpected Output: " + testCase.expected_output, "mistral"),
-        ]);
-
-        // Update test case with new results
-        await supabase
-          .from('test_cases')
-          .update({
-            mistral_output: mistralResult.output,
-            mistral_factually: mistralEval.output.toLowerCase().includes('factual'),
-            meta_output: metaResult.output,
-            meta_factually: metaEval.output.toLowerCase().includes('factual'),
-            google_output: googleResult.output,
-            google_factually: googleEval.output.toLowerCase().includes('factual'),
-            unittest_input_mistral: experiment.systemPrompt + "\n" + testCase.test_case,
-            unittest_input_meta: experiment.systemPrompt + "\n" + testCase.test_case,
-            unittest_input_google: experiment.systemPrompt + "\n" + testCase.test_case,
-            unittest_output_mistral: mistralEval.output,
-            unittest_output_meta: metaEval.output,
-            unittest_output_google: googleEval.output,
-          })
-          .eq('id', testCase.id);
+      if (!response.ok) {
+        throw new Error('Failed to run experiment');
       }
 
       toast({
@@ -222,9 +151,8 @@ export function ExperimentParent() {
       });
 
       // Refresh the test cases list
-      fetchTestCases();
+      await fetchTestCases();
     } catch (error) {
-      console.error('Error running experiment:', error);
       toast({
         title: "Error",
         description: "Failed to run experiment",
@@ -253,7 +181,6 @@ export function ExperimentParent() {
             </DialogHeader>
             <ExperimentForm 
               onSubmit={handleExperimentAdded} 
-              supabase={supabase}
               initialData={editingExperiment}
             />
           </DialogContent>

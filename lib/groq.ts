@@ -1,4 +1,4 @@
-const GROQ_API_KEY = process.env.NEXT_PUBLIC_GROQ_API_KEY;
+const GROQ_API_KEY = process.env.PRIVATE_GROQ_API_KEY;
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
 const MODEL_MAPPING = {
@@ -8,12 +8,16 @@ const MODEL_MAPPING = {
 };
 
 export async function callGroqAPI(systemPrompt: string, testCase: string, model: 'mistral' | 'meta' | 'google') {
+  if (!GROQ_API_KEY) {
+    throw new Error('PRIVATE_GROQ_API_KEY is not configured');
+  }
+
   try {
     const response = await fetch(GROQ_API_URL, {
       method: 'POST',
       headers: {
+        'Authorization': `Bearer ${GROQ_API_KEY}`,
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GROQ_API_KEY}`
       },
       body: JSON.stringify({
         model: MODEL_MAPPING[model],
@@ -43,7 +47,6 @@ export async function callGroqAPI(systemPrompt: string, testCase: string, model:
     }
 
     const output = data.choices[0].message.content;
-    console.log("Groq API output:", output);
     // More robust factuality check
     const factually = Boolean(
       output && 
