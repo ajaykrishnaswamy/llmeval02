@@ -1,0 +1,24 @@
+meta {
+  name: VideoFeed
+  type: http
+  seq: 3
+}
+
+get {
+  url: http://localhost:3000/api/videos/feed?limit=20&offset=0
+  body: none
+  auth: bearer
+}
+
+params:query {
+  limit: 20
+  offset: 0
+}
+
+headers {
+  Authorization: Bearer YOUR_CLERK_TOKEN
+}
+
+auth:bearer {
+  token: sk_test_5K0aC0bFpgtl3e9v8eMYAX4zyHxVRQ9bEJwPUbiva6
+}

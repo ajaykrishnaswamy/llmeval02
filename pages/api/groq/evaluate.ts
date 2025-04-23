@@ -38,17 +38,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const results = {
       mistral: {
         output: mistralResult.output,
-        factually: mistralEval.output.toLowerCase().includes('factual'),
+        factually: mistralEval.output.trim().toLowerCase() === 'factual',
         evaluation: mistralEval.output
       },
       meta: {
         output: metaResult.output,
-        factually: metaEval.output.toLowerCase().includes('factual'),
+        factually: metaEval.output.trim().toLowerCase() === 'factual',
         evaluation: metaEval.output
       },
       google: {
         output: googleResult.output,
-        factually: googleEval.output.toLowerCase().includes('factual'),
+        factually: googleEval.output.trim().toLowerCase() === 'factual',
         evaluation: googleEval.output
       }
     };

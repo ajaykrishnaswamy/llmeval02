@@ -1,0 +1,24 @@
+meta {
+  name: Update test case
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{baseUrl}}/api/test-cases/:id
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "test_case": "",
+    "expected_output": "",
+    "mistral_output": "",
+    "meta_output": "",
+    "google_output": "",
+    "mistral_factually": "",
+    "meta_factually": "",
+    "google_factually": ""
+  }
+}

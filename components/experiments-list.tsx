@@ -37,14 +37,21 @@ export function ExperimentsList({
   const [selectedExperiment, setSelectedExperiment] = useState<Experiment | null>(null);
   const [isTestCaseDialogOpen, setIsTestCaseDialogOpen] = useState(false);
 
-  const handleRunClick = (experiment: Experiment) => {
+  useEffect(() => {
+    fetchExperiments();
+  }, [fetchExperiments]);
+
+  const handleAddTestCase = (experiment: Experiment) => {
+    console.log('Opening test case dialog for experiment:', experiment);
     setSelectedExperiment(experiment);
     setIsTestCaseDialogOpen(true);
   };
 
-  useEffect(() => {
-    fetchExperiments();
-  }, [fetchExperiments]);
+  const handleTestCaseDialogClose = () => {
+    console.log('Closing test case dialog');
+    setSelectedExperiment(null);
+    setIsTestCaseDialogOpen(false);
+  };
 
   return (
     <>
@@ -113,13 +120,10 @@ export function ExperimentsList({
                     <Button
                       size="sm"
                       className="bg-blue-500 hover:bg-blue-600 text-white"
-                      onClick={() => {
-                        setSelectedExperiment(experiment);
-                        setIsTestCaseDialogOpen(true);
-                      }}
+                      onClick={() => handleAddTestCase(experiment)}
                     >
                       <Plus className="h-4 w-4 mr-1" />
-                      Add
+                      Add Test Case
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -131,7 +135,7 @@ export function ExperimentsList({
 
       <TestCaseDialog
         open={isTestCaseDialogOpen}
-        onOpenChange={setIsTestCaseDialogOpen}
+        onOpenChange={handleTestCaseDialogClose}
         experiment={selectedExperiment}
         onSaveTestCase={onSaveTestCase}
       />

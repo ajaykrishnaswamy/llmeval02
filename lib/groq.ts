@@ -1,63 +1,34 @@
-const GROQ_API_KEY = process.env.PRIVATE_GROQ_API_KEY;
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
+
 const MODEL_MAPPING = {
-  mistral: 'mixtral-8x7b-32768',
-  meta: 'llama-3.1-8b-instant',
+  mistral: 'llama3-70b-8192',
+  meta: 'llama-3.3-70b-versatile',
   google: 'gemma2-9b-it'
 };
 
 export async function callGroqAPI(systemPrompt: string, testCase: string, model: 'mistral' | 'meta' | 'google') {
-  if (!GROQ_API_KEY) {
-    throw new Error('PRIVATE_GROQ_API_KEY is not configured');
-  }
-
   try {
-    const response = await fetch(GROQ_API_URL, {
+    const response = await fetch('/api/groq/generate', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${GROQ_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: MODEL_MAPPING[model],
-        messages: [
-          {
-            role: 'system',
-            content: systemPrompt
-          },
-          {
-            role: 'user',
-            content: testCase
-          }
-        ],
-        temperature: 0.7
+        systemPrompt,
+        testCase,
+        model
       })
     });
 
     if (!response.ok) {
-      throw new Error(`Groq API error: ${response.statusText}`);
+      throw new Error(`API error: ${response.statusText}`);
     }
 
     const data = await response.json();
-    
-    // Add error checking for response structure
-    if (!data.choices?.[0]?.message?.content) {
-      throw new Error('Invalid response format from Groq API');
-    }
-
-    const output = data.choices[0].message.content;
-    // More robust factuality check
-    const factually = Boolean(
-      output && 
-      output.length > 0 && 
-      !output.toLowerCase().includes('error') && 
-      !output.toLowerCase().includes('unable to')
-    );
-
     return {
-      output,
-      factually
+      output: data.output,
+      factually: data.factually
     };
   } catch (error) {
     console.error(`Error calling Groq API for ${model}:`, error);

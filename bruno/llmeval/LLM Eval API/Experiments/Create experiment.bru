@@ -1,0 +1,21 @@
+meta {
+  name: Create experiment
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/experiments
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "",
+    "systemPrompt": "",
+    "mistral": "",
+    "google": "",
+    "meta": ""
+  }
+}

@@ -11,9 +11,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { TestCase } from "@/types/test-case";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { callGroqAPI } from "@/lib/groq";
 
@@ -58,12 +67,31 @@ function getScoreColor(factually: boolean) {
 
 export function TestCasesList({ testCases, onEdit, onDelete }: TestCasesListProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedTestCase, setSelectedTestCase] = useState<TestCase>(DEFAULT_TEST_CASE);
   const [evaluating, setEvaluating] = useState<Record<string, boolean>>({});
+  const [editedTestCase, setEditedTestCase] = useState({
+    test_case: '',
+    expected_output: ''
+  });
 
   const handleDeleteClick = (testCase: TestCase) => {
     setSelectedTestCase(testCase);
     setDeleteDialogOpen(true);
+  };
+
+  const handleEditClick = (testCase: TestCase) => {
+    setSelectedTestCase(testCase);
+    setEditedTestCase({
+      test_case: testCase.test_case,
+      expected_output: testCase.expected_output
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handleEditSubmit = async () => {
+    await onEdit(selectedTestCase.id, editedTestCase);
+    setEditDialogOpen(false);
   };
 
   const handleOutputChange = async (
@@ -81,10 +109,24 @@ export function TestCasesList({ testCases, onEdit, onDelete }: TestCasesListProp
     setEvaluating(prev => ({ ...prev, [`${testCaseId}-${model}`]: true }));
 
     try {
-      const score = 0;
+      const evaluationPrompt = `You are a strict evaluator of LLM responses. Your task is to evaluate if the LLM response matches the expected output, considering the original system prompt and user input.
+
+Task: Evaluate if the LLM response is factually accurate compared to the expected output.
+Consider:
+1. Does it directly answer the task specified in the system prompt?
+2. Does it match the expected output format?
+3. Is the information correct when compared to the expected output?
+
+Return ONLY one of these two words: "Factual" or "Not Factual"`;
+
+      const evalResult = await callGroqAPI(
+        evaluationPrompt,
+        `LLM Response: ${value}\nExpected Output: ${testCase.expected_output}`,
+        model
+      );
 
       await onEdit(testCaseId, {
-        [`${model}_factually`]: score
+        [`${model}_factually`]: evalResult.output.trim().toLowerCase() === 'factual'
       });
     } catch (error) {
       console.error('Error evaluating factuality:', error);
@@ -213,7 +255,11 @@ export function TestCasesList({ testCases, onEdit, onDelete }: TestCasesListProp
                 <TableCell>{testCase.unittest_output_google}</TableCell>
                 <TableCell>{testCase.unittest_output_mistral}</TableCell>
                 <TableCell className="text-right space-x-2">
-                  <Button variant="ghost" size="sm" onClick={() => onEdit(testCase.id, testCase)}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleEditClick(testCase)}
+                  >
                     Edit
                   </Button>
                   <Button
@@ -252,6 +298,46 @@ export function TestCasesList({ testCases, onEdit, onDelete }: TestCasesListProp
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Test Case</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="test_case">Test Case</Label>
+              <Textarea
+                id="test_case"
+                value={editedTestCase.test_case}
+                onChange={(e) => setEditedTestCase(prev => ({
+                  ...prev,
+                  test_case: e.target.value
+                }))}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="expected_output">Expected Output</Label>
+              <Textarea
+                id="expected_output"
+                value={editedTestCase.expected_output}
+                onChange={(e) => setEditedTestCase(prev => ({
+                  ...prev,
+                  expected_output: e.target.value
+                }))}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleEditSubmit}>
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 } 

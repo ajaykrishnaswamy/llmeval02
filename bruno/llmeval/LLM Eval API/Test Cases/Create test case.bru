@@ -1,0 +1,19 @@
+meta {
+  name: Create test case
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/test-cases
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "experiment_id": "",
+    "test_case": "",
+    "expected_output": ""
+  }
+}

@@ -24,20 +24,32 @@ export function TestCaseDialog({ open, onOpenChange, experiment, onSaveTestCase 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!experiment) return;
+    console.log('Form submitted', { testCase, expectedOutput, experiment });
+    
+    if (!experiment) {
+      console.error('No experiment selected');
+      toast({
+        title: "Error",
+        description: "No experiment selected",
+        variant: "destructive",
+      });
+      return;
+    }
     
     // Validation: Check if both fields are filled
     if (!testCase.trim() || !expectedOutput.trim()) {
+      console.log('Validation failed - empty fields');
       toast({
         title: "Incomplete Fields",
         description: "Please fill in both the Test Case and Expected Output fields.",
         variant: "destructive",
       });
-      return; // Exit the function if validation fails
+      return;
     }
 
     setIsLoading(true);
     try {
+      console.log('Starting API calls for models');
       // Run all API calls in parallel and wait for them to complete
       const results = await Promise.all([
         callGroqAPI(experiment.systemPrompt, testCase, "mistral"),
@@ -45,10 +57,11 @@ export function TestCaseDialog({ open, onOpenChange, experiment, onSaveTestCase 
         callGroqAPI(experiment.systemPrompt, testCase, "google")
       ]);
 
+      console.log('API calls completed', results);
       const [mistralResult, metaResult, googleResult] = results;
 
       // Save test case after API calls are complete
-      await onSaveTestCase({
+      const testCaseData = {
         experiment_id: experiment.id,
         test_case: testCase,
         expected_output: expectedOutput,
@@ -64,7 +77,10 @@ export function TestCaseDialog({ open, onOpenChange, experiment, onSaveTestCase 
         unittest_output_meta: "",
         unittest_output_google: "",
         unittest_output_mistral: "",
-      });
+      };
+      
+      console.log('Saving test case');
+      await onSaveTestCase(testCaseData);
 
       // Only close dialog after everything is saved
       onOpenChange(false);
@@ -114,7 +130,7 @@ export function TestCaseDialog({ open, onOpenChange, experiment, onSaveTestCase 
               disabled={isLoading}
             />
           </div>
-          <Button type="submit" disabled={isLoading}>
+          <Button type="submit" disabled={isLoading} className="w-full">
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

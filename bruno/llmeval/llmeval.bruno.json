@@ -1,0 +1,154 @@
+{
+  "version": "1",
+  "name": "LLM Eval API",
+  "type": "collection",
+  "folders": [
+    {
+      "name": "1. Experiments",
+      "items": [
+        {
+          "name": "Create Experiment",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:3000/api/experiments",
+            "body": {
+              "type": "json",
+              "raw": "{\n  \"name\": \"Test Experiment\",\n  \"systemPrompt\": \"You are a helpful AI assistant. Please answer the following question accurately and concisely.\",\n  \"mistral\": true,\n  \"google\": true,\n  \"meta\": true\n}"
+            },
+            "headers": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Get All Experiments",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:3000/api/experiments"
+          }
+        },
+        {
+          "name": "Get Single Experiment",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:3000/api/experiments/1"
+          }
+        },
+        {
+          "name": "Update Experiment",
+          "request": {
+            "method": "PUT",
+            "url": "http://localhost:3000/api/experiments/1",
+            "body": {
+              "type": "json",
+              "raw": "{\n  \"name\": \"Updated Experiment\",\n  \"systemPrompt\": \"You are a helpful AI assistant. Please answer the following question accurately and concisely. Be sure to include examples.\",\n  \"mistral\": true,\n  \"google\": true,\n  \"meta\": true\n}"
+            },
+            "headers": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Test Cases",
+      "items": [
+        {
+          "name": "Create Test Case",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:3000/api/test-cases",
+            "body": {
+              "type": "json",
+              "raw": "{\n  \"experiment_id\": 1,\n  \"test_case\": \"What is the capital of France?\",\n  \"expected_output\": \"The capital of France is Paris.\"\n}"
+            },
+            "headers": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Get All Test Cases",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:3000/api/test-cases"
+          }
+        },
+        {
+          "name": "Update Test Case",
+          "request": {
+            "method": "PUT",
+            "url": "http://localhost:3000/api/test-cases/1",
+            "body": {
+              "type": "json",
+              "raw": "{\n  \"test_case\": \"What is the capital of France? Please provide some historical context.\",\n  \"expected_output\": \"The capital of France is Paris. It has been France's capital since 508 CE when Clovis I established his kingdom there.\"\n}"
+            },
+            "headers": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. GROQ Evaluation",
+      "items": [
+        {
+          "name": "Evaluate Test Case",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:3000/api/groq/evaluate",
+            "body": {
+              "type": "json",
+              "raw": "{\n  \"systemPrompt\": \"You are a helpful AI assistant. Please answer the following question accurately and concisely.\",\n  \"userInput\": \"What is the capital of France?\",\n  \"expectedOutput\": \"The capital of France is Paris.\"\n}"
+            },
+            "headers": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Run Experiment",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:3000/api/experiments/1/run"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Cleanup",
+      "items": [
+        {
+          "name": "Delete Test Case",
+          "request": {
+            "method": "DELETE",
+            "url": "http://localhost:3000/api/test-cases/1"
+          }
+        },
+        {
+          "name": "Delete Experiment",
+          "request": {
+            "method": "DELETE",
+            "url": "http://localhost:3000/api/experiments/1"
+          }
+        }
+      ]
+    }
+  ]
+} 

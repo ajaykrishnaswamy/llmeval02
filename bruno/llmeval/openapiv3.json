@@ -1,0 +1,728 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "LLM Eval API",
+    "description": "API for managing LLM experiments, test cases, and evaluations",
+    "version": "1.0.0",
+    "contact": {
+      "name": "API Support",
+      "email": "support@example.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Local development server"
+    }
+  ],
+  "paths": {
+    "/api/experiments": {
+      "get": {
+        "summary": "Get all experiments",
+        "description": "Retrieves all experiments from the database",
+        "operationId": "getExperiments",
+        "tags": ["Experiments"],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Experiment"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create experiment",
+        "description": "Creates a new experiment",
+        "operationId": "createExperiment",
+        "tags": ["Experiments"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExperimentInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Experiment created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Experiment"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/experiments/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "Experiment ID"
+        }
+      ],
+      "get": {
+        "summary": "Get single experiment",
+        "description": "Retrieves a specific experiment by ID",
+        "operationId": "getExperimentById",
+        "tags": ["Experiments"],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Experiment"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Experiment not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update experiment",
+        "description": "Updates an existing experiment",
+        "operationId": "updateExperiment",
+        "tags": ["Experiments"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExperimentInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Experiment updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Experiment"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete experiment",
+        "description": "Deletes an experiment and its associated test cases",
+        "operationId": "deleteExperiment",
+        "tags": ["Experiments"],
+        "responses": {
+          "200": {
+            "description": "Experiment deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Experiment and associated test cases deleted successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/experiments/{id}/run": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "Experiment ID"
+        }
+      ],
+      "post": {
+        "summary": "Run experiment",
+        "description": "Executes all test cases associated with an experiment",
+        "operationId": "runExperiment",
+        "tags": ["Experiments"],
+        "responses": {
+          "200": {
+            "description": "Experiment run successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Experiment run successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/test-cases": {
+      "get": {
+        "summary": "Get all test cases",
+        "description": "Retrieves all test cases with their associated experiment information",
+        "operationId": "getTestCases",
+        "tags": ["Test Cases"],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TestCase"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create test case",
+        "description": "Creates a new test case",
+        "operationId": "createTestCase",
+        "tags": ["Test Cases"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TestCaseInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Test case created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TestCase"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/test-cases/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "Test Case ID"
+        }
+      ],
+      "put": {
+        "summary": "Update test case",
+        "description": "Updates an existing test case",
+        "operationId": "updateTestCase",
+        "tags": ["Test Cases"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TestCaseUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Test case updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TestCase"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete test case",
+        "description": "Deletes a test case",
+        "operationId": "deleteTestCase",
+        "tags": ["Test Cases"],
+        "responses": {
+          "200": {
+            "description": "Test case deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Test case deleted successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/groq/evaluate": {
+      "post": {
+        "summary": "Evaluate test case",
+        "description": "Evaluates a test case using multiple LLM models (Mistral, Meta, and Google)",
+        "operationId": "evaluateTestCase",
+        "tags": ["GROQ Evaluation"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvaluationInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Evaluation completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvaluationResult"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Experiment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "example": "Test Experiment"
+          },
+          "systemPrompt": {
+            "type": "string",
+            "example": "You are a helpful AI assistant. Please answer the following question accurately and concisely."
+          },
+          "mistral": {
+            "type": "boolean",
+            "example": true
+          },
+          "google": {
+            "type": "boolean",
+            "example": true
+          },
+          "meta": {
+            "type": "boolean",
+            "example": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ExperimentInput": {
+        "type": "object",
+        "required": ["name", "systemPrompt"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Test Experiment"
+          },
+          "systemPrompt": {
+            "type": "string",
+            "example": "You are a helpful AI assistant. Please answer the following question accurately and concisely."
+          },
+          "mistral": {
+            "type": "boolean",
+            "example": true
+          },
+          "google": {
+            "type": "boolean",
+            "example": true
+          },
+          "meta": {
+            "type": "boolean",
+            "example": true
+          }
+        }
+      },
+      "TestCase": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "experiment_id": {
+            "type": "integer",
+            "example": 1
+          },
+          "test_case": {
+            "type": "string",
+            "example": "What is the capital of France?"
+          },
+          "expected_output": {
+            "type": "string",
+            "example": "The capital of France is Paris."
+          },
+          "mistral_output": {
+            "type": "string",
+            "example": "The capital of France is Paris."
+          },
+          "meta_output": {
+            "type": "string",
+            "example": "The capital of France is Paris."
+          },
+          "google_output": {
+            "type": "string",
+            "example": "The capital of France is Paris."
+          },
+          "mistral_factually": {
+            "type": "boolean",
+            "example": true
+          },
+          "meta_factually": {
+            "type": "boolean",
+            "example": true
+          },
+          "google_factually": {
+            "type": "boolean",
+            "example": true
+          },
+          "experiment": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "example": 1
+              },
+              "name": {
+                "type": "string",
+                "example": "Test Experiment"
+              }
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "TestCaseInput": {
+        "type": "object",
+        "required": ["experiment_id", "test_case", "expected_output"],
+        "properties": {
+          "experiment_id": {
+            "type": "integer",
+            "example": 1
+          },
+          "test_case": {
+            "type": "string",
+            "example": "What is the capital of France?"
+          },
+          "expected_output": {
+            "type": "string",
+            "example": "The capital of France is Paris."
+          }
+        }
+      },
+      "TestCaseUpdate": {
+        "type": "object",
+        "properties": {
+          "test_case": {
+            "type": "string",
+            "example": "What is the capital of France? Please provide some historical context."
+          },
+          "expected_output": {
+            "type": "string",
+            "example": "The capital of France is Paris. It has been France's capital since 508 CE when Clovis I established his kingdom there."
+          },
+          "mistral_output": {
+            "type": "string"
+          },
+          "meta_output": {
+            "type": "string"
+          },
+          "google_output": {
+            "type": "string"
+          },
+          "mistral_factually": {
+            "type": "boolean"
+          },
+          "meta_factually": {
+            "type": "boolean"
+          },
+          "google_factually": {
+            "type": "boolean"
+          }
+        }
+      },
+      "EvaluationInput": {
+        "type": "object",
+        "required": ["systemPrompt", "userInput", "expectedOutput"],
+        "properties": {
+          "systemPrompt": {
+            "type": "string",
+            "example": "You are a helpful AI assistant. Please answer the following question accurately and concisely."
+          },
+          "userInput": {
+            "type": "string",
+            "example": "What is the capital of France?"
+          },
+          "expectedOutput": {
+            "type": "string",
+            "example": "The capital of France is Paris."
+          }
+        }
+      },
+      "EvaluationResult": {
+        "type": "object",
+        "properties": {
+          "mistral": {
+            "type": "object",
+            "properties": {
+              "output": {
+                "type": "string",
+                "example": "The capital of France is Paris."
+              },
+              "factually": {
+                "type": "boolean",
+                "example": true
+              },
+              "evaluation": {
+                "type": "string",
+                "example": "Factual"
+              }
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "output": {
+                "type": "string",
+                "example": "The capital of France is Paris."
+              },
+              "factually": {
+                "type": "boolean",
+                "example": true
+              },
+              "evaluation": {
+                "type": "string",
+                "example": "Factual"
+              }
+            }
+          },
+          "google": {
+            "type": "object",
+            "properties": {
+              "output": {
+                "type": "string",
+                "example": "The capital of France is Paris."
+              },
+              "factually": {
+                "type": "boolean",
+                "example": true
+              },
+              "evaluation": {
+                "type": "string",
+                "example": "Factual"
+              }
+            }
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "example": "Error message description"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Experiments",
+      "description": "Operations related to experiments"
+    },
+    {
+      "name": "Test Cases",
+      "description": "Operations related to test cases"
+    },
+    {
+      "name": "GROQ Evaluation",
+      "description": "Operations related to GROQ model evaluation"
+    }
+  ]
+} 
