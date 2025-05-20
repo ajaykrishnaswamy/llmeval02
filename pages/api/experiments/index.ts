@@ -17,6 +17,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (error) throw error;
         return res.status(200).json(data);
       } catch (error) {
+        console.error('Error fetching experiments:', error);
         return res.status(500).json({ error: 'Error fetching experiments' });
       }
 
@@ -30,6 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (error) throw error;
         return res.status(201).json(data[0]);
       } catch (error) {
+        console.error('Error creating experiment:', error);
         return res.status(500).json({ error: 'Error creating experiment' });
       }
 

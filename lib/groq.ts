@@ -7,9 +7,18 @@ const MODEL_MAPPING = {
   google: 'gemma2-9b-it'
 };
 
+// Helper function to get base URL
+const getBaseUrl = () => {
+  if (process.env.NEXT_PUBLIC_BASE_URL) {
+    return process.env.NEXT_PUBLIC_BASE_URL;
+  }
+  // Fallback for server environment
+  return 'http://localhost:3000';
+};
+
 export async function callGroqAPI(systemPrompt: string, testCase: string, model: 'mistral' | 'meta' | 'google') {
   try {
-    const response = await fetch('/api/groq/generate', {
+    const response = await fetch(`${getBaseUrl()}/api/groq/generate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
